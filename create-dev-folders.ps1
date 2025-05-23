@@ -1,4 +1,4 @@
-# Portable Development Environment Setup Script
+# Portable Development Environment Setup Script (create-dev-folders.ps1)
 # Use this script to recreate your development environment on any new machine
 param(
     [string]$TargetDrive = "C",
@@ -21,18 +21,22 @@ Minimal Setup: $Minimal
 
 # Define base paths based on target drive
 if ($TargetDrive -eq "D") {
-    $basePath = "D:\Dev"
-    $keysPath = "D:\Keys"
-    $dbtPath = "D:\Tools\dbt"
-    $toolsPath = "D:\Tools"
-    $cachePath = "D:\Cache"
+    $masterPath = "D:\Dev"
+    $basePath = "$masterPath\Projects"
+    $keysPath = "$masterPath\Keys"
+    $dbtPath = "$masterPath\Tools\dbt"
+    $toolsPath = "$masterPath\Tools"
+    $cachePath = "$masterPath\Cache"
+    $docsPath = "$masterPath\Docs"
     Write-Host "🎯 Setting up development environment on D: drive" -ForegroundColor Green
 } else {
-    $basePath = "$env:USERPROFILE\Dev"
-    $keysPath = "$env:USERPROFILE\.keys"
-    $dbtPath = "$env:USERPROFILE\.dbt"
-    $toolsPath = "$env:USERPROFILE\.tools"
-    $cachePath = "$env:USERPROFILE\.cache"
+    $masterPath = "$env:USERPROFILE\Dev"
+    $basePath = "$masterPath\Projects"
+    $keysPath = "$masterPath\Keys"
+    $dbtPath = "$masterPath\Tools\dbt"
+    $toolsPath = "$masterPath\Tools"
+    $cachePath = "$masterPath\Cache"
+    $docsPath = "$masterPath\Docs"
     Write-Host "🎯 Setting up development environment on C: drive" -ForegroundColor Green
 }
 
@@ -293,7 +297,7 @@ function Setup-ConfigurationFiles {
     Write-Host "`n⚙️ Setting up configuration files..." -ForegroundColor Magenta
     
     # Environment variables setup script
-    $envConfigPath = Join-Path -Path $basePath -ChildPath "env-setup.ps1"
+    $envConfigPath = Join-Path -Path $docsPath -ChildPath "env-setup.ps1"
     $envConfig = @"
 # Development Environment Variables Setup
 # Run this script to configure your development environment
@@ -301,10 +305,12 @@ function Setup-ConfigurationFiles {
 Write-Host "🔧 Configuring development environment..." -ForegroundColor Cyan
 
 # Development Paths
+`$env:DEV_MASTER = "$masterPath"
 `$env:DEV_HOME = "$basePath"
 `$env:TOOLS_HOME = "$toolsPath"
 `$env:CACHE_HOME = "$cachePath"
 `$env:KEYS_HOME = "$keysPath"
+`$env:DOCS_HOME = "$docsPath"
 
 # Python Configuration
 `$env:PIP_CACHE_DIR = "$cachePath\pip"
@@ -345,7 +351,37 @@ Write-Host "💡 Restart your terminal or IDE to use new environment variables" 
     $projectGuideContent = @"
 # 📁 Development Environment Guide
 
-## 🎯 Directory Structure & Purpose
+## 🏗️ Master Directory Structure
+
+Your development environment is organized under: **$masterPath**
+
+```
+$masterPath\
+├── Projects\           # All development projects
+│   ├── ventures\       # 🚀 Business projects
+│   ├── personal\       # 📂 Hobby projects
+│   ├── consulting\     # 💼 Client work
+│   ├── academic\       # 🎓 School/research
+│   ├── sandbox\        # 🧪 Experiments
+│   ├── portfolio\      # 🎨 Showcase work
+│   └── dbt_projects\   # 📊 Data transformation
+├── Tools\              # Development tools & environments
+│   ├── Python-Envs\   # Virtual environments per category
+│   ├── Flutter-SDK\    # Flutter development kit
+│   └── Android\        # Android SDK & tools
+├── Cache\              # Build caches & temporary files
+│   ├── pip\            # Python package cache
+│   ├── npm\            # Node.js package cache
+│   └── gradle\         # Android build cache
+├── Keys\               # Authentication & certificates
+│   ├── cloud\          # Cloud provider keys
+│   ├── databases\      # Database credentials
+│   └── ssh\            # SSH keys
+└── Docs\               # Documentation & scripts
+    ├── env-setup.ps1   # Environment configuration
+    ├── dev-functions.ps1 # Helper functions
+    └── README.md       # This guide
+```
 
 ### 📂 Core Development Directories
 
@@ -465,24 +501,32 @@ Organized key management in `$keysPath\`:
 - Backup important work, especially `ventures/` and `consulting/`
 
 ---
-🏠 Environment Root: $basePath
+🏠 Environment Root: $masterPath
+📁 Projects: $basePath
+🔧 Tools: $toolsPath
+💾 Cache: $cachePath
+🔑 Keys: $keysPath
+📚 Docs: $docsPath
 📅 Created: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
 🖥️ Machine: $env:COMPUTERNAME
 👤 User: $env:USERNAME
 "@
     
-    $projectGuidePath = Join-Path -Path $basePath -ChildPath "README.md"
+    $projectGuidePath = Join-Path -Path $docsPath -ChildPath "README.md"
     Set-Content -Path $projectGuidePath -Value $projectGuideContent
     Write-Host "📋 Created development environment guide: $projectGuidePath" -ForegroundColor Green
 
     # Create useful PowerShell functions
-    $functionsPath = Join-Path -Path $basePath -ChildPath "dev-functions.ps1"
+    $functionsPath = Join-Path -Path $docsPath -ChildPath "dev-functions.ps1"
     $functionsContent = @"
 # Development Environment Helper Functions
 # Source this file: . .\dev-functions.ps1
 
 # Quick navigation functions
-function dev { Set-Location "$basePath" }
+function dev { Set-Location "$masterPath" }
+function projects { Set-Location "$basePath" }
+function tools { Set-Location "$toolsPath" }
+function docs { Set-Location "$docsPath" }
 function sandbox { Set-Location "$basePath\sandbox" }
 function ventures { Set-Location "$basePath\ventures" }
 function personal { Set-Location "$basePath\personal" }
@@ -517,7 +561,8 @@ function Graduate-Project {
 
 function Show-DevSummary {
     Write-Host "`n📊 Development Environment Summary" -ForegroundColor Cyan
-    Write-Host "🏠 Base Path: $basePath" -ForegroundColor White
+    Write-Host "🏠 Master Path: $masterPath" -ForegroundColor White
+    Write-Host "📁 Projects Path: $basePath" -ForegroundColor White
     
     `$categories = @("sandbox", "personal", "academic", "consulting", "ventures", "portfolio", "dbt_projects")
     foreach (`$category in `$categories) {
@@ -542,15 +587,24 @@ function Activate-Venv {
 }
 
 Write-Host "✅ Development functions loaded!" -ForegroundColor Green
-Write-Host "💡 Try: dev, sandbox, ventures, New-SandboxProject, Show-DevSummary" -ForegroundColor Cyan
+Write-Host "💡 Try: dev, projects, tools, docs, sandbox, ventures" -ForegroundColor Cyan
+Write-Host "🚀 Management: New-SandboxProject, Graduate-Project, Show-DevSummary" -ForegroundColor Cyan
 "@
     Set-Content -Path $functionsPath -Value $functionsContent
     Write-Host "⚡ Created helper functions: $functionsPath" -ForegroundColor Green
 }
 
 # Main execution starts here
-Write-Host "`n📁 Creating development directories..." -ForegroundColor Magenta
-Create-Directory -basePath $basePath -folders $devFolders -category "Development"
+Write-Host "`n🏗️ Creating master development directory..." -ForegroundColor Magenta
+if (-not (Test-Path $masterPath)) {
+    New-Item -ItemType Directory -Path $masterPath -Force | Out-Null
+    Write-Host "✅ Created master directory: $masterPath" -ForegroundColor Green
+} else {
+    Write-Host "📁 Master directory already exists: $masterPath" -ForegroundColor Yellow
+}
+
+Write-Host "`n📁 Creating project directories..." -ForegroundColor Magenta
+Create-Directory -basePath $basePath -folders $devFolders -category "Development Projects"
 
 Write-Host "`n🔧 Creating tools directories..." -ForegroundColor Magenta  
 Create-Directory -basePath $toolsPath -folders $toolsFolders -category "Tools"
@@ -563,6 +617,14 @@ Create-Directory -basePath $keysPath -folders $keysFolders -category "Keys"
 
 Write-Host "`n🔧 Creating dbt directories..." -ForegroundColor Magenta
 Create-Directory -basePath $dbtPath -folders $dbtFolders -category "DBT"
+
+Write-Host "`n📚 Creating documentation directory..." -ForegroundColor Magenta
+if (-not (Test-Path $docsPath)) {
+    New-Item -ItemType Directory -Path $docsPath -Force | Out-Null
+    Write-Host "✅ Created documentation directory: $docsPath" -ForegroundColor Green
+} else {
+    Write-Host "📁 Documentation directory already exists: $docsPath" -ForegroundColor Yellow
+}
 
 # Optional features
 if ($CreateVirtualEnvs) {
@@ -612,32 +674,33 @@ Write-Host @"
 ===========================================
 
 📍 Environment Details:
-   🏠 Base Path: $basePath
+   🏠 Master Directory: $masterPath
+   📁 Projects: $basePath
    🔧 Tools: $toolsPath  
    💾 Cache: $cachePath
    🔑 Keys: $keysPath
-   📊 DBT: $dbtPath
+   📚 Documentation: $docsPath
    
    Setup Type: $(if ($Minimal) { "Minimal" } else { "Full" })
    Virtual Envs: $(if ($CreateVirtualEnvs) { "Created" } else { "Skipped" })
    Common Tools: $(if ($InstallCommonTools) { "Installed" } else { "Skipped" })
 
 🚀 Next Steps:
-   1. Run: $basePath\env-setup.ps1 (configure environment variables)
-   2. Read: $basePath\README.md (comprehensive guide)
-   3. Load: . $basePath\dev-functions.ps1 (helper functions)
+   1. Run: $docsPath\env-setup.ps1 (configure environment variables)
+   2. Read: $docsPath\README.md (comprehensive guide)
+   3. Load: . $docsPath\dev-functions.ps1 (helper functions)
    4. Start: Create your first project in the appropriate category!
 
 💡 Quick Start Commands:
    - New experiment: New-SandboxProject "my-test"
-   - Navigate: dev, sandbox, ventures, personal
+   - Navigate: dev, projects, tools, docs, sandbox, ventures
    - Summary: Show-DevSummary
    - Environment: Activate-Venv sandbox
 
 📚 Documentation Created:
-   - Environment Guide: $basePath\README.md
-   - Helper Functions: $basePath\dev-functions.ps1
-   - Environment Setup: $basePath\env-setup.ps1
+   - Environment Guide: $docsPath\README.md
+   - Helper Functions: $docsPath\dev-functions.ps1
+   - Environment Setup: $docsPath\env-setup.ps1
 
 🔄 Reusable Setup:
    This script can be used on any new machine to recreate your development environment!
